@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Compensation Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+        .container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        .slider-container {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 15px;
+            background: lightgreen;
+            border-radius: 5px;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4caf50;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #4caf50;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .output {
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+        h2 {
+            margin-top: 30px;
+            font-size: 20px;
+            color: #555;
+        }
+        .results-box {
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            background-color: #f0fff0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Solar Compensation Calculator</h1>
+
+        <div class="slider-container">
+            <label for="averageSystemSize">Average System Size (kW):</label>
+            <input type="range" id="averageSystemSize" min="2" max="20" step="0.1" value="10" oninput="updateValues()">
+            <span id="averageSystemSizeOutput" class="output">10</span>
+        </div>
+
+        <div class="slider-container">
+            <label for="ppw">Average Price Per Watt ($):</label>
+            <input type="range" id="ppw" min="2" max="5" step="0.1" value="3.5" oninput="updateValues()">
+            <span id="ppwOutput" class="output">3.5</span>
+        </div>
+
+        <div class="slider-container">
+            <label for="fieldMarketingSales">Field Marketing Generated Sales:</label>
+            <input type="range" id="fieldMarketingSales" min="0" max="50" step="1" value="5" oninput="updateValues()">
+            <span id="fieldMarketingSalesOutput" class="output">5</span>
+        </div>
+
+        <div class="slider-container">
+            <label for="selfGeneratedSales">Self-Generated Sales:</label>
+            <input type="range" id="selfGeneratedSales" min="0" max="50" step="1" value="5" oninput="updateValues()">
+            <span id="selfGeneratedSalesOutput" class="output">5</span>
+        </div>
+
+        <div class="results-box">
+            <h2>Results:</h2>
+            <p>Number of Sales: <span id="resultSalesCount">10</span></p>
+            <p>Redline: $<span id="resultRedline">2.60</span> per watt</p>
+            <p>Average System Size: <span id="resultSystemSize">10</span> kW</p>
+            <p>Total Commission Earned: $<span id="resultCommission">340000</span></p>
+        </div>
+    </div>
+
+    <script>
+        function calculateRedline(totalSales) {
+            if (totalSales <= 7) {
+                return 2.60;
+            } else if (totalSales <= 14) {
+                return 2.55;
+            } else {
+                return 2.45;
+            }
+        }
+
+        function calculateCompensation(averageSystemSize, ppw, fieldMarketingSales, selfGeneratedSales) {
+            const totalSales = fieldMarketingSales + selfGeneratedSales;
+            const redline = calculateRedline(totalSales);
+            const redlineFieldMarketing = redline + 0.20; // Adding $0.20 for Field Marketing Sales
+
+            const totalFieldMarketingRevenue = averageSystemSize * fieldMarketingSales * ppw * 1000;
+            const totalFieldMarketingRedline = averageSystemSize * fieldMarketingSales * redlineFieldMarketing * 1000;
+
+            const totalSelfGeneratedRevenue = averageSystemSize * selfGeneratedSales * ppw * 1000;
+            const totalSelfGeneratedRedline = averageSystemSize * selfGeneratedSales * redline * 1000;
+
+            const totalRevenue = totalFieldMarketingRevenue + totalSelfGeneratedRevenue;
+            const totalRedline = totalFieldMarketingRedline + totalSelfGeneratedRedline;
+            const commission = totalRevenue - totalRedline;
+
+            return { redline, totalRevenue, commission };
+        }
+
+        function updateValues() {
+            const averageSystemSize = parseFloat(document.getElementById('averageSystemSize').value);
+            const ppw = parseFloat(document.getElementById('ppw').value);
+            const fieldMarketingSales = parseInt(document.getElementById('fieldMarketingSales').value);
+            const selfGeneratedSales = parseInt(document.getElementById('selfGeneratedSales').value);
+
+            const { redline, totalRevenue, commission } = calculateCompensation(averageSystemSize, ppw, fieldMarketingSales, selfGeneratedSales);
+
+            document.getElementById('averageSystemSizeOutput').textContent = averageSystemSize;
+            document.getElementById('ppwOutput').textContent = ppw;
+            document.getElementById('fieldMarketingSalesOutput').textContent = fieldMarketingSales;
+            document.getElementById('selfGeneratedSalesOutput').textContent = selfGeneratedSales;
+
+            document.getElementById('resultSalesCount').textContent = fieldMarketingSales + selfGeneratedSales;
+            document.getElementById('resultRedline').textContent = redline.toFixed(2);
+            document.getElementById('resultSystemSize').textContent = averageSystemSize.toFixed(2);
+            document.getElementById('resultCommission').textContent = commission.toFixed(2);
+        }
+
+        updateValues();
+    </script>
+</body>
+</html>
